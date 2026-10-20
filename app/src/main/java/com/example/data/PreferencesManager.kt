@@ -15,9 +15,9 @@ class PreferencesManager private constructor(context: Context) {
     val settingsFlow: StateFlow<AppSettings> = _settingsFlow.asStateFlow()
 
     private fun loadSettings(): AppSettings {
-        val threshold = prefs.getInt(KEY_THRESHOLD, 20)
-        val duration = prefs.getInt(KEY_DURATION_MS, 2500)
-        val interval = prefs.getInt(KEY_INTERVAL_SEC, 60) // default 60s
+        val threshold = prefs.getInt(KEY_THRESHOLD, 10)
+        val duration = prefs.getInt(KEY_DURATION_MS, 800)
+        val interval = prefs.getInt(KEY_INTERVAL_SEC, 180)
         val serviceEnabled = prefs.getBoolean(KEY_SERVICE_ENABLED, true)
         val vibration = prefs.getBoolean(KEY_VIBRATION, true)
         val ignoreCharging = prefs.getBoolean(KEY_IGNORE_CHARGING, true)

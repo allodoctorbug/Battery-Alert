@@ -11,59 +11,62 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val PicassoLightScheme = lightColorScheme(
-    primary = PicassoBlue,
+private val DarkColorScheme = darkColorScheme(
+    primary = PrimaryBlue,
     onPrimary = Color.White,
-    primaryContainer = PicassoBlueSoft,
-    onPrimaryContainer = PicassoBlue,
-    secondary = PicassoTerracotta,
-    onSecondary = Color.White,
-    secondaryContainer = PicassoCanvasWarm,
-    onSecondaryContainer = PicassoInk,
-    tertiary = PicassoOchre,
-    onTertiary = PicassoInk,
-    background = PicassoCanvas,
-    onBackground = PicassoInk,
-    surface = PicassoCanvasWarm,
-    onSurface = PicassoInk,
-    surfaceVariant = Color(0xFFE5DDD0),
-    onSurfaceVariant = PicassoInkMuted,
-    error = PicassoVermilion,
+    primaryContainer = Color(0xFF1E3A8A),
+    onPrimaryContainer = Color(0xFFDBEAFE),
+    secondary = AccentCyan,
+    onSecondary = Color.Black,
+    secondaryContainer = Color(0xFF164E63),
+    onSecondaryContainer = Color(0xFFCFFAFE),
+    error = BatteryRed,
     onError = Color.White,
-    errorContainer = PicassoVermilionWash,
-    onErrorContainer = PicassoVermilionDark
+    errorContainer = BatteryRedDark,
+    onErrorContainer = Color(0xFFFEE2E2),
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnBackground,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = Color(0xFF94A3B8)
 )
 
-private val PicassoDarkScheme = darkColorScheme(
-    primary = Color(0xFF6B9DE8),
-    onPrimary = Color(0xFF0F1E33),
-    primaryContainer = PicassoDarkSurfaceVariant,
-    onPrimaryContainer = Color(0xFFD6E3F0),
-    secondary = PicassoTerracotta,
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFF2C2A28),
-    onSecondaryContainer = PicassoDarkInk,
-    tertiary = PicassoOchre,
-    onTertiary = Color.Black,
-    background = PicassoDarkBackground,
-    onBackground = PicassoDarkInk,
-    surface = PicassoDarkSurface,
-    onSurface = PicassoDarkInk,
-    surfaceVariant = PicassoDarkSurfaceVariant,
-    onSurfaceVariant = PicassoDarkInkWash,
-    error = PicassoVermilion,
+private val LightColorScheme = lightColorScheme(
+    primary = PrimaryBlueVariant,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFDBEAFE),
+    onPrimaryContainer = Color(0xFF1E3A8A),
+    secondary = AccentCyan,
+    onSecondary = Color.Black,
+    secondaryContainer = Color(0xFFCFFAFE),
+    onSecondaryContainer = Color(0xFF164E63),
+    error = BatteryRed,
     onError = Color.White,
-    errorContainer = Color(0xFF4A1410),
-    onErrorContainer = Color(0xFFFFB4AB)
+    errorContainer = Color(0xFFFEE2E2),
+    onErrorContainer = BatteryRedDark,
+    background = LightBackground,
+    onBackground = LightOnBackground,
+    surface = LightSurface,
+    onSurface = LightOnBackground,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = Color(0xFF475569)
 )
 
 @Composable
 fun MyApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Keep authentic Picasso palette intact
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = if (darkTheme) PicassoDarkScheme else PicassoLightScheme
+    val colorScheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            val context = LocalContext.current
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        darkTheme -> DarkColorScheme
+        else -> LightColorScheme
+    }
 
     MaterialTheme(
         colorScheme = colorScheme,

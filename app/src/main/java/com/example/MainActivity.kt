@@ -30,15 +30,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.screens.DashboardScreen
+import com.example.ui.theme.BatteryRed
 import com.example.ui.theme.MyApplicationTheme
-import com.example.ui.theme.PicassoBlue
-import com.example.ui.theme.PicassoVermilion
+import com.example.ui.theme.PrimaryBlue
 
 class MainActivity : ComponentActivity() {
 
@@ -88,11 +86,9 @@ class MainActivity : ComponentActivity() {
                         CenterAlignedTopAppBar(
                             title = {
                                 Text(
-                                    text = "Alerte Batterie",
-                                    fontFamily = FontFamily.Serif,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 19.sp,
-                                    letterSpacing = 0.5.sp
+                                    text = "Alerte Batterie (<${settings.thresholdPercent}%)",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
                                 )
                             },
                             actions = {
@@ -102,13 +98,13 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.VolumeUp,
-                                        contentDescription = "Tester le bip",
-                                        tint = if (isBuzzerPlaying) PicassoVermilion else PicassoBlue
+                                        contentDescription = "Tester bip",
+                                        tint = if (isBuzzerPlaying) BatteryRed else PrimaryBlue
                                     )
                                 }
                             },
                             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.background
+                                containerColor = MaterialTheme.colorScheme.surface
                             )
                         )
                     }
@@ -131,6 +127,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onToggleService = { viewModel.toggleService(it) },
                             onToggleIgnoreCharging = { viewModel.toggleIgnoreWhenCharging(it) },
+                            onUpdateBeepDuration = { viewModel.setBeepDuration(it) },
                             onUpdateInterval = { viewModel.setBeepInterval(it) },
                             onUpdateThreshold = { viewModel.setThreshold(it) },
                             onTestBeep = { viewModel.playTestBeep() },
