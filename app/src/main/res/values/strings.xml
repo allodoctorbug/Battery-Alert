@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Alerte Batterie</string>
+    <string name="notification_channel_name">Surveillance de la batterie</string>
+    <string name="notification_channel_desc">Notifie l\'état du moniteur de batterie et émet les alertes</string>
+    <string name="notification_alert_title">Batterie faible (&lt; %1$d%%)</string>
+    <string name="notification_alert_text">Attention, votre batterie est à %1$d%%. Bip sonore émis !</string>
+    <string name="notification_service_title">Surveillance batterie active</string>
+    <string name="notification_service_text">Niveau actuel : %1$d%% (seuil d\'alerte : %2$d%%)</string>
+</resources>

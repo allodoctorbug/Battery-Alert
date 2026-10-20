@@ -1,0 +1,38 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Battery Outer Shell -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,30 h20 c2.2,0 4,1.8 4,4 v40 c0,2.2 -1.8,4 -4,4 H44 c-2.2,0 -4,-1.8 -4,-4 V34 c0,-2.2 1.8,-4 4,-4 z" />
+    <!-- Battery Terminal Cap -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,26 h8 c1.1,0 2,0.9 2,2 v2 H48 v-2 c0,-1.1 0.9,-2 2,-2 z" />
+    <!-- Battery Inner Level (<20% in vibrant warning color) -->
+    <path
+        android:fillColor="#EF4444"
+        android:pathData="M44,62 h20 v12 c0,2.2 -1.8,4 -4,4 H48 c-2.2,0 -4,-1.8 -4,-4 V62 z" />
+    <!-- Alert Sound Waves on the right -->
+    <path
+        android:strokeColor="#3B82F6"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M73,46 c2.5,4.5 2.5,11.5 0,16" />
+    <path
+        android:strokeColor="#3B82F6"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M79,41 c5,7.5 5,18.5 0,26" />
+    <!-- Warning exclamation mark inside battery top -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M53,38 h2 v11 h-2 z" />
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M53,52 h2 v2.5 h-2 z" />
+</vector>
