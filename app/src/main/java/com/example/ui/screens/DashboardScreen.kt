@@ -70,7 +70,8 @@ fun DashboardScreen(
     onStopBeep: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isCritical = batteryInfo.level <= settings.thresholdPercent
+    val isCritical = batteryInfo.level <= settings.thresholdPercent &&
+            !(batteryInfo.isCharging && settings.ignoreWhenCharging)
 
     Column(
         modifier = modifier
@@ -198,10 +199,11 @@ fun DashboardScreen(
                     }
 
                     Text(
-                        text = if (isCritical) "Bip toutes les ${formatDelay(settings.beepIntervalSeconds)}"
+                        text = if (batteryInfo.isCharging) "En charge sur secteur • Alerte coupée"
+                        else if (isCritical) "Bip toutes les ${formatDelay(settings.beepIntervalSeconds)}"
                         else "Alerte si niveau ≤ ${settings.thresholdPercent}%",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (batteryInfo.isCharging) BatteryGreen else MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     // Test / Stop Button

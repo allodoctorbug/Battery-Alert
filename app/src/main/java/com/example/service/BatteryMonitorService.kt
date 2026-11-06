@@ -38,8 +38,16 @@ class BatteryMonitorService : Service() {
 
     private val batteryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == Intent.ACTION_BATTERY_CHANGED) {
+            val action = intent?.action
+            if (action == Intent.ACTION_BATTERY_CHANGED) {
                 handleBatteryChanged(intent)
+            } else if (action == Intent.ACTION_POWER_CONNECTED || action == Intent.ACTION_POWER_DISCONNECTED) {
+                context?.let { ctx ->
+                    val info = BatteryInfo.getCurrent(ctx)
+                    _currentBatteryInfo.value = info
+                    updateMonitorNotification(info)
+                    checkAndManageAlertLoop(info)
+                }
             }
         }
     }
@@ -49,9 +57,22 @@ class BatteryMonitorService : Service() {
         prefsManager = PreferencesManager.getInstance(this)
         powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
 
-        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_BATTERY_CHANGED)
+            addAction(Intent.ACTION_POWER_CONNECTED)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
+        }
         registerReceiver(batteryReceiver, filter)
         _isServiceRunning.value = true
+
+        // React immediately if user alters threshold, ignoreWhenCharging or duration in the UI
+        serviceScope.launch {
+            prefsManager.settingsFlow.collect {
+                val currentInfo = _currentBatteryInfo.value
+                updateMonitorNotification(currentInfo)
+                checkAndManageAlertLoop(currentInfo)
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -63,8 +84,7 @@ class BatteryMonitorService : Service() {
             }
             ACTION_STOP_BEEP -> {
                 BuzzerManager.stop()
-                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.cancel(ALERT_NOTIFICATION_ID)
+                dismissCriticalAlertNotification()
                 return START_STICKY
             }
         }
@@ -114,23 +134,24 @@ class BatteryMonitorService : Service() {
                 alertLoopJob = serviceScope.launch {
                     while (isActive) {
                         val currentSettings = prefsManager.settingsFlow.value
-                        val currentLevel = _currentBatteryInfo.value.level
-                        val isStillCritical = currentLevel <= currentSettings.thresholdPercent &&
-                                !(_currentBatteryInfo.value.isCharging && currentSettings.ignoreWhenCharging)
+                        val currentInfo = _currentBatteryInfo.value
+                        val isStillCritical = currentInfo.level <= currentSettings.thresholdPercent &&
+                                !(currentInfo.isCharging && currentSettings.ignoreWhenCharging)
 
                         if (!isStillCritical) {
+                            stopAlertLoop()
                             break
                         }
 
-                        triggerAlert(currentLevel)
+                        triggerAlert(currentInfo.level)
 
-                        // Variable delay between beeps chosen by user
-                        val delayMs = (currentSettings.beepIntervalSeconds * 1000L).coerceAtLeast(10000L)
+                        val delayMs = (currentSettings.beepIntervalSeconds * 1000L).coerceAtLeast(5000L)
                         delay(delayMs)
                     }
                 }
             }
         } else {
+            // Dismiss notification and cancel any ongoing beep immediately
             stopAlertLoop()
         }
     }
@@ -138,10 +159,35 @@ class BatteryMonitorService : Service() {
     private fun stopAlertLoop() {
         alertLoopJob?.cancel()
         alertLoopJob = null
+        try {
+            wakeLock?.let {
+                if (it.isHeld) it.release()
+            }
+        } catch (_: Exception) {}
+        BuzzerManager.stop()
+        dismissCriticalAlertNotification()
+    }
+
+    private fun dismissCriticalAlertNotification() {
+        try {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.cancel(ALERT_NOTIFICATION_ID)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun triggerAlert(level: Int) {
         val settings = prefsManager.settingsFlow.value
+        val currentInfo = _currentBatteryInfo.value
+        val isStillCritical = currentInfo.level <= settings.thresholdPercent &&
+                !(currentInfo.isCharging && settings.ignoreWhenCharging)
+
+        if (!isStillCritical) {
+            stopAlertLoop()
+            return
+        }
+
         acquireWakeLock(8000L)
 
         BuzzerManager.playLongBeep(
@@ -222,7 +268,7 @@ class BatteryMonitorService : Service() {
         )
 
         val settings = prefsManager.settingsFlow.value
-        val chargeText = if (info.isCharging) " (En charge)" else ""
+        val chargeText = if (info.isCharging) " (En charge sur secteur)" else ""
         val content = "Niveau : ${info.level}%$chargeText • Seuil : ${settings.thresholdPercent}% • Délai : ${formatDelay(settings.beepIntervalSeconds)}"
 
         return NotificationCompat.Builder(this, BatteryAlertApp.CHANNEL_MONITOR_ID)
@@ -257,6 +303,11 @@ class BatteryMonitorService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         stopAlertLoop()
+        try {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.cancel(ALERT_NOTIFICATION_ID)
+            notificationManager.cancel(MONITOR_NOTIFICATION_ID)
+        } catch (_: Exception) {}
         try {
             unregisterReceiver(batteryReceiver)
         } catch (_: Exception) {}

@@ -12,9 +12,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -59,10 +56,11 @@ fun BatteryGauge(
         label = "BatteryLevelAnimation"
     )
 
-    val isCritical = level <= threshold
+    val isCritical = level <= threshold && !isCharging
 
     val primaryColor by animateColorAsState(
         targetValue = when {
+            isCharging -> BatteryGreen
             level <= threshold -> BatteryRed
             level <= 50 -> BatteryAmber
             else -> BatteryGreen
@@ -73,6 +71,7 @@ fun BatteryGauge(
 
     val secondaryColor by animateColorAsState(
         targetValue = when {
+            isCharging -> BatteryGreenLight
             level <= threshold -> BatteryRedLight
             level <= 50 -> BatteryAmberLight
             else -> BatteryGreenLight
@@ -189,9 +188,9 @@ fun BatteryGauge(
             )
 
             Text(
-                text = "<$threshold%",
+                text = if (isCharging) "En charge" else "<$threshold%",
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isCharging) BatteryGreen else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

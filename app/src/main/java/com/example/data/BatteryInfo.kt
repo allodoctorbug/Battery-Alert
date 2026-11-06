@@ -7,10 +7,13 @@ import android.os.BatteryManager
 
 data class BatteryInfo(
     val level: Int = 100,
-    val isCharging: Boolean = false
+    val isCharging: Boolean = false,
+    val isPlugged: Boolean = false
 ) {
     val isLow: Boolean
         get() = level <= 20
+
+    fun isUnderThreshold(threshold: Int): Boolean = level <= threshold
 
     companion object {
         fun fromIntent(intent: Intent?): BatteryInfo {
@@ -25,12 +28,20 @@ data class BatteryInfo(
             }
 
             val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-            val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+            val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
+            val isPlugged = plugged > 0 ||
+                    plugged == BatteryManager.BATTERY_PLUGGED_AC ||
+                    plugged == BatteryManager.BATTERY_PLUGGED_USB ||
+                    plugged == BatteryManager.BATTERY_PLUGGED_WIRELESS
+
+            val isCharging = isPlugged ||
+                    status == BatteryManager.BATTERY_STATUS_CHARGING ||
                     status == BatteryManager.BATTERY_STATUS_FULL
 
             return BatteryInfo(
                 level = level.coerceIn(0, 100),
-                isCharging = isCharging
+                isCharging = isCharging,
+                isPlugged = isPlugged
             )
         }
 
