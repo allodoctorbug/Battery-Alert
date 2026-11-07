@@ -58,10 +58,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         updateSettings(settings.value.copy(ignoreWhenCharging = ignore))
     }
 
+    fun setAlertSoundType(type: com.example.data.AlertSoundType) {
+        updateSettings(settings.value.copy(alertSoundType = type))
+    }
+
     fun playTestBeep() {
         val currentSettings = settings.value
-        BuzzerManager.playLongBeep(
+        BuzzerManager.playAlert(
             context = getApplication(),
+            alertType = currentSettings.alertSoundType,
             durationMs = currentSettings.beepDurationMs,
             frequencyHz = 880,
             vibrate = currentSettings.vibrationEnabled

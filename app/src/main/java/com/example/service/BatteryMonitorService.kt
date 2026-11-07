@@ -190,8 +190,9 @@ class BatteryMonitorService : Service() {
 
         acquireWakeLock(8000L)
 
-        BuzzerManager.playLongBeep(
+        BuzzerManager.playAlert(
             context = this,
+            alertType = settings.alertSoundType,
             durationMs = settings.beepDurationMs,
             frequencyHz = 880,
             vibrate = settings.vibrationEnabled
@@ -224,7 +225,11 @@ class BatteryMonitorService : Service() {
 
         val settings = prefsManager.settingsFlow.value
         val title = "Batterie Critique : $level% !"
-        val message = "Batterie sous ${settings.thresholdPercent}%. Bip répété toutes les ${formatDelay(settings.beepIntervalSeconds)}."
+        val soundLabel = when (settings.alertSoundType) {
+            com.example.data.AlertSoundType.SENSUAL_VOICE -> "Voix : « Batterie déchargée »"
+            com.example.data.AlertSoundType.BEEP -> "Bip sonore"
+        }
+        val message = "Batterie sous ${settings.thresholdPercent}%. $soundLabel répété toutes les ${formatDelay(settings.beepIntervalSeconds)}."
 
         val notification = NotificationCompat.Builder(this, BatteryAlertApp.CHANNEL_ALERT_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_low_battery)
@@ -237,7 +242,7 @@ class BatteryMonitorService : Service() {
             .setAutoCancel(true)
             .addAction(
                 android.R.drawable.ic_media_pause,
-                "Couper le bip",
+                "Arrêter l'alerte",
                 stopPendingIntent
             )
             .build()

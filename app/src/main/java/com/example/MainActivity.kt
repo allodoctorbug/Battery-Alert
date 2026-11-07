@@ -14,7 +14,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -97,8 +98,12 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.testTag("top_bar_test_beep_button")
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.VolumeUp,
-                                        contentDescription = "Tester bip",
+                                        imageVector = if (settings.alertSoundType == com.example.data.AlertSoundType.SENSUAL_VOICE) {
+                                            Icons.Default.RecordVoiceOver
+                                        } else {
+                                            Icons.AutoMirrored.Filled.VolumeUp
+                                        },
+                                        contentDescription = "Tester l'alerte",
                                         tint = if (isBuzzerPlaying) BatteryRed else PrimaryBlue
                                     )
                                 }
@@ -127,6 +132,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onToggleService = { viewModel.toggleService(it) },
                             onToggleIgnoreCharging = { viewModel.toggleIgnoreWhenCharging(it) },
+                            onUpdateAlertSoundType = { viewModel.setAlertSoundType(it) },
                             onUpdateBeepDuration = { viewModel.setBeepDuration(it) },
                             onUpdateInterval = { viewModel.setBeepInterval(it) },
                             onUpdateThreshold = { viewModel.setThreshold(it) },

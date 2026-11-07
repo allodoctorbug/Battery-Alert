@@ -1,9 +1,15 @@
 package com.example.data
 
+enum class AlertSoundType(val label: String, val subtitle: String) {
+    SENSUAL_VOICE("Voix sensuelle", "Voix féminine : « Batterie déchargée »"),
+    BEEP("Bip sonore", "Signal sonore classique")
+}
+
 data class AppSettings(
-    val thresholdPercent: Int = 10,            // Seuil d'alerte réduit (10% par défaut)
-    val beepDurationMs: Int = 800,             // Temps du bip raccourci (0.8 seconde)
-    val beepIntervalSeconds: Int = 180,        // Délai augmenté entre les bips (3 minutes = 180s)
+    val thresholdPercent: Int = 10,
+    val beepDurationMs: Int = 800,
+    val beepIntervalSeconds: Int = 180,
+    val alertSoundType: AlertSoundType = AlertSoundType.SENSUAL_VOICE,
     val backgroundServiceEnabled: Boolean = true,
     val vibrationEnabled: Boolean = true,
     val ignoreWhenCharging: Boolean = true

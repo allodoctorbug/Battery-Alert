@@ -16,19 +16,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.HourglassBottom
-import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Power
 import androidx.compose.material.icons.filled.PowerOff
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -45,6 +47,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.AlertSoundType
 import com.example.data.AppSettings
 import com.example.data.BatteryInfo
 import com.example.ui.components.BatteryGauge
@@ -63,6 +66,7 @@ fun DashboardScreen(
     onRequestNotificationPermission: () -> Unit,
     onToggleService: (Boolean) -> Unit,
     onToggleIgnoreCharging: (Boolean) -> Unit,
+    onUpdateAlertSoundType: (AlertSoundType) -> Unit,
     onUpdateBeepDuration: (Int) -> Unit,
     onUpdateInterval: (Int) -> Unit,
     onUpdateThreshold: (Int) -> Unit,
@@ -199,9 +203,14 @@ fun DashboardScreen(
                     }
 
                     Text(
-                        text = if (batteryInfo.isCharging) "En charge sur secteur • Alerte coupée"
-                        else if (isCritical) "Bip toutes les ${formatDelay(settings.beepIntervalSeconds)}"
-                        else "Alerte si niveau ≤ ${settings.thresholdPercent}%",
+                        text = if (batteryInfo.isCharging) {
+                            "En charge sur secteur • Alerte coupée"
+                        } else if (isCritical) {
+                            val sound = if (settings.alertSoundType == AlertSoundType.SENSUAL_VOICE) "Voix sensuelle" else "Bip"
+                            "$sound toutes les ${formatDelay(settings.beepIntervalSeconds)}"
+                        } else {
+                            "Alerte si niveau ≤ ${settings.thresholdPercent}%"
+                        },
                         fontSize = 12.sp,
                         color = if (batteryInfo.isCharging) BatteryGreen else MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -219,7 +228,7 @@ fun DashboardScreen(
                         ) {
                             Icon(imageVector = Icons.Default.Stop, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "ARRÊTER LE BIP", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "ARRÊTER L'ALERTE", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         Button(
@@ -233,10 +242,21 @@ fun DashboardScreen(
                                 .height(38.dp)
                                 .testTag("test_beep_button")
                         ) {
-                            Icon(imageVector = Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(18.dp))
+                            val icon = if (settings.alertSoundType == AlertSoundType.SENSUAL_VOICE) {
+                                Icons.Default.RecordVoiceOver
+                            } else {
+                                Icons.AutoMirrored.Filled.VolumeUp
+                            }
+                            val buttonText = if (settings.alertSoundType == AlertSoundType.SENSUAL_VOICE) {
+                                "Écouter la voix sensuelle"
+                            } else {
+                                "Tester le bip (${"%.1f".format(settings.beepDurationMs / 1000f)}s)"
+                            }
+
+                            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Tester le bip (${"%.1f".format(settings.beepDurationMs / 1000f)}s)",
+                                text = buttonText,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -246,13 +266,13 @@ fun DashboardScreen(
             }
         }
 
-        // Bandeau 1: Barre horizontale variable pour le TEMPS DU BIP (0.2s à 2.0s)
+        // Bandeau 1: Type d'alerte (Voix sensuelle féminine "Batterie déchargée" ou Bip sonore)
         Card(
             shape = RoundedCornerShape(14.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("beep_duration_card")
+                .testTag("alert_type_card")
         ) {
             Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
                 Row(
@@ -262,57 +282,80 @@ fun DashboardScreen(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.HourglassTop,
+                            imageVector = Icons.Default.RecordVoiceOver,
                             contentDescription = null,
-                            tint = BatteryAmber,
+                            tint = PrimaryBlue,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Temps du bip",
+                            text = "Alerte sonore",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
                     }
 
-                    Text(
-                        text = "%.1f s".format(settings.beepDurationMs / 1000f),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = BatteryAmber
-                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        AlertSoundType.values().forEach { type ->
+                            val isSelected = settings.alertSoundType == type
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { onUpdateAlertSoundType(type) },
+                                label = {
+                                    Text(
+                                        text = if (type == AlertSoundType.SENSUAL_VOICE) "Voix sensuelle ★" else "Bip",
+                                        fontSize = 10.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = PrimaryBlue,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
                 }
 
-                Slider(
-                    value = (settings.beepDurationMs / 100).toFloat(),
-                    onValueChange = {
-                        val ms = (it.toInt() * 100).coerceIn(200, 2000)
-                        onUpdateBeepDuration(ms)
-                    },
-                    valueRange = 2f..20f, // 0.2s to 2.0s
-                    steps = 17,
-                    colors = SliderDefaults.colors(
-                        thumbColor = BatteryAmber,
-                        activeTrackColor = BatteryAmber
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(28.dp)
-                        .testTag("beep_duration_slider")
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(text = "Court (0.2s)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(text = "Moyen (0.8s)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(text = "Long (2.0s)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (settings.alertSoundType == AlertSoundType.SENSUAL_VOICE) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Voix féminine sensuelle suave disant « Batterie déchargée »",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Temps du bip", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = "%.1f s".format(settings.beepDurationMs / 1000f), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BatteryAmber)
+                    }
+                    Slider(
+                        value = (settings.beepDurationMs / 100).toFloat(),
+                        onValueChange = {
+                            val ms = (it.toInt() * 100).coerceIn(200, 2000)
+                            onUpdateBeepDuration(ms)
+                        },
+                        valueRange = 2f..20f,
+                        steps = 17,
+                        colors = SliderDefaults.colors(
+                            thumbColor = BatteryAmber,
+                            activeTrackColor = BatteryAmber
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(26.dp)
+                            .testTag("beep_duration_slider")
+                    )
                 }
             }
         }
 
-        // Bandeau 2: Barre horizontale variable pour le DÉLAI ENTRE LES BIPS (1 min à 15 min)
+        // Bandeau 2: Barre horizontale variable pour le DÉLAI ENTRE LES ALERTES (1 min à 15 min)
         Card(
             shape = RoundedCornerShape(14.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
@@ -335,7 +378,7 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Délai entre les bips",
+                            text = "Délai entre les alertes",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -355,7 +398,7 @@ fun DashboardScreen(
                         val sec = (it.toInt() * 30).coerceIn(60, 900)
                         onUpdateInterval(sec)
                     },
-                    valueRange = 2f..30f, // 60s (1 min) to 900s (15 min) in 30s increments
+                    valueRange = 2f..30f,
                     steps = 27,
                     colors = SliderDefaults.colors(
                         thumbColor = PrimaryBlue,
@@ -379,7 +422,7 @@ fun DashboardScreen(
             }
         }
 
-        // Bandeau 3: Barre horizontale variable pour le SEUIL D'ALERTE (5% à 20%)
+        // Bandeau 3: Barre horizontale variable pour le SEUIL D'ALERTE (3% à 20%)
         Card(
             shape = RoundedCornerShape(14.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
@@ -439,7 +482,7 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = "3%", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(text = "10% (recommandé)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = "10% (défaut)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(text = "20%", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -505,7 +548,7 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Ne pas biper si le téléphone est branché",
+                            text = "Ne pas alerter si le téléphone est branché",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold
                         )

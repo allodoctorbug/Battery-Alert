@@ -18,6 +18,12 @@ class PreferencesManager private constructor(context: Context) {
         val threshold = prefs.getInt(KEY_THRESHOLD, 10)
         val duration = prefs.getInt(KEY_DURATION_MS, 800)
         val interval = prefs.getInt(KEY_INTERVAL_SEC, 180)
+        val alertTypeName = prefs.getString(KEY_ALERT_SOUND_TYPE, AlertSoundType.SENSUAL_VOICE.name)
+        val alertType = try {
+            AlertSoundType.valueOf(alertTypeName ?: AlertSoundType.SENSUAL_VOICE.name)
+        } catch (_: Exception) {
+            AlertSoundType.SENSUAL_VOICE
+        }
         val serviceEnabled = prefs.getBoolean(KEY_SERVICE_ENABLED, true)
         val vibration = prefs.getBoolean(KEY_VIBRATION, true)
         val ignoreCharging = prefs.getBoolean(KEY_IGNORE_CHARGING, true)
@@ -26,6 +32,7 @@ class PreferencesManager private constructor(context: Context) {
             thresholdPercent = threshold,
             beepDurationMs = duration,
             beepIntervalSeconds = interval,
+            alertSoundType = alertType,
             backgroundServiceEnabled = serviceEnabled,
             vibrationEnabled = vibration,
             ignoreWhenCharging = ignoreCharging
@@ -37,6 +44,7 @@ class PreferencesManager private constructor(context: Context) {
             .putInt(KEY_THRESHOLD, newSettings.thresholdPercent)
             .putInt(KEY_DURATION_MS, newSettings.beepDurationMs)
             .putInt(KEY_INTERVAL_SEC, newSettings.beepIntervalSeconds)
+            .putString(KEY_ALERT_SOUND_TYPE, newSettings.alertSoundType.name)
             .putBoolean(KEY_SERVICE_ENABLED, newSettings.backgroundServiceEnabled)
             .putBoolean(KEY_VIBRATION, newSettings.vibrationEnabled)
             .putBoolean(KEY_IGNORE_CHARGING, newSettings.ignoreWhenCharging)
@@ -58,6 +66,7 @@ class PreferencesManager private constructor(context: Context) {
         private const val KEY_THRESHOLD = "threshold_percent"
         private const val KEY_DURATION_MS = "beep_duration_ms"
         private const val KEY_INTERVAL_SEC = "beep_interval_sec"
+        private const val KEY_ALERT_SOUND_TYPE = "alert_sound_type"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
         private const val KEY_VIBRATION = "vibration_enabled"
         private const val KEY_IGNORE_CHARGING = "ignore_charging"
